@@ -11,7 +11,7 @@
 #Requires -Version 7
 
 # Dot-source the Install.ps1 script to load the function into the current session
-. .\Install.ps1
+# . .\Install.ps1
 
 # Linked Files (Destination => Source)
 $symlinks = @{
