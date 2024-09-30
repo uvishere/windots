@@ -43,7 +43,8 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
 > Under _**active development**_, expect changes. Existing configuration files will be overwritten. Please make a backup of any files you wish to keep before proceeding.
 
 1. Clone the repository to your preferred location.
-2. Run `Setup.ps1` from an elevated PowerShell prompt. 
+2. Run the `Install.ps1` script first
+3. Run `Setup.ps1` from an elevated PowerShell prompt. 
 
 ## 🤝 Contributing
 Pull requests and issues are welcome. If you have any questions or suggestions, please open an issue or reach out to me on [Twitter](https://twitter.com/scott_mckendry).

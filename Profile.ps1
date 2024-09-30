@@ -4,7 +4,7 @@
 # ██║███╗██║██║██║╚██╗██║██║  ██║██║   ██║   ██║   ╚════██║
 # ╚███╔███╔╝██║██║ ╚████║██████╔╝╚██████╔╝   ██║   ███████║
 #  ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
-# Profile.ps1 - Scott McKendry
+# Profile.ps1 - UV Panta
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -263,7 +263,11 @@ function Remove-ItemExtended {
         [string]$Path
     )
 
-    Write-Verbose "Removing item '$Path' $($rf ? 'and all its children' : '')"
+    if ($rf) {
+        Write-Verbose "Removing item '$Path' and all its children"
+    } else {
+        Write-Verbose "Removing item '$Path'"
+    }
     Remove-Item $Path -Recurse:$rf -Force:$rf
 }
 
@@ -284,7 +288,8 @@ $ENV:FZF_DEFAULT_OPTS = '--color=fg:-1,fg+:#ffffff,bg:-1,bg+:#3c4048 --color=hl:
 # Start background jobs for dotfiles and software update checks
 Start-ThreadJob -ScriptBlock {
     Set-Location -Path $ENV:WindotsLocalRepo
-    $gitUpdates = git fetch && git status
+    git fetch
+    $gitUpdates = git status
     if ($gitUpdates -match "behind") {
         $ENV:DOTFILES_UPDATE_AVAILABLE = "󱤛 "
     }
@@ -338,4 +343,5 @@ Import-Module -Name CompletionPredictor
 if ([Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
     return
 }
+
 fastfetch
