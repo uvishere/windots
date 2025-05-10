@@ -274,17 +274,17 @@ function Remove-ItemExtended {
 function Add-Alias {
     <#
     .SYNOPSIS
-        Creates a new PowerShell alias for a command.
+        Creates a new PowerShell alias for a command and stores it in a configuration file.
     .DESCRIPTION
-        Creates a new PowerShell alias for a command using Set-Alias.
-        This function provides a convenient way to add aliases during a PowerShell session.
+        Creates a new PowerShell alias for a command using Set-Alias and stores it in a JSON configuration file
+        for persistence between sessions. Aliases are automatically loaded when the profile is loaded.
     .PARAMETER Name
         The name of the alias to create.
     .PARAMETER Command
         The command that the alias will execute.
     .EXAMPLE
         Add-Alias -Name gst -Command "git status"
-        Creates an alias 'gst' for the command 'git status'.
+        Creates an alias 'gst' for the command 'git status' and stores it in the configuration file.
     #>
     [CmdletBinding()]
     param (
@@ -295,7 +295,66 @@ function Add-Alias {
     )
 
     Write-Verbose "Creating alias '$Name' for command '$Command'"
+    
+    # Create the alias for the current session
     Set-Alias -Name $Name -Value $Command -Scope Global
+    
+    # Store the alias in the configuration file
+    $aliasesFilePath = Join-Path -Path $ENV:WindotsLocalRepo -ChildPath "aliases\aliases.json"
+    
+    # Read existing aliases
+    $aliasesConfig = Get-Content -Path $aliasesFilePath -Raw | ConvertFrom-Json
+    
+    # Add or update the alias
+    $aliasesConfig.aliases | Add-Member -MemberType NoteProperty -Name $Name -Value $Command -Force
+    
+    # Write the updated configuration back to the file
+    $aliasesConfig | ConvertTo-Json | Set-Content -Path $aliasesFilePath
+    
+    Write-Host "Alias '$Name' for command '$Command' has been added and saved to the configuration file."
+}
+
+function Remove-CustomAlias {
+    <#
+    .SYNOPSIS
+        Removes a custom alias from the configuration file and current session.
+    .DESCRIPTION
+        Removes a custom alias from the JSON configuration file and the current PowerShell session.
+    .PARAMETER Name
+        The name of the alias to remove.
+    .EXAMPLE
+        Remove-CustomAlias -Name gst
+        Removes the 'gst' alias from the configuration file and current session.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, Position = 0)]
+        [string]$Name
+    )
+    
+    Write-Verbose "Removing alias '$Name'"
+    
+    # Remove the alias from the current session
+    Remove-Item -Path "Alias:\$Name" -ErrorAction SilentlyContinue
+    
+    # Remove the alias from the configuration file
+    $aliasesFilePath = Join-Path -Path $ENV:WindotsLocalRepo -ChildPath "aliases\aliases.json"
+    
+    # Read existing aliases
+    $aliasesConfig = Get-Content -Path $aliasesFilePath -Raw | ConvertFrom-Json
+    
+    # Check if the alias exists in the configuration
+    if ($aliasesConfig.aliases.PSObject.Properties.Name -contains $Name) {
+        # Remove the alias
+        $aliasesConfig.aliases.PSObject.Properties.Remove($Name)
+        
+        # Write the updated configuration back to the file
+        $aliasesConfig | ConvertTo-Json | Set-Content -Path $aliasesFilePath
+        
+        Write-Host "Alias '$Name' has been removed from the configuration file and current session."
+    } else {
+        Write-Host "Alias '$Name' not found in the configuration file."
+    }
 }
 
 
@@ -307,6 +366,35 @@ $ENV:_ZO_DATA_DIR = $ENV:WindotsLocalRepo
 $ENV:OBSIDIAN_PATH = "$HOME\git\obsidian-vault"
 $ENV:BAT_CONFIG_DIR = "$ENV:WindotsLocalRepo\bat"
 $ENV:FZF_DEFAULT_OPTS = '--color=fg:-1,fg+:#ffffff,bg:-1,bg+:#3c4048 --color=hl:#5ea1ff,hl+:#5ef1ff,info:#ffbd5e,marker:#5eff6c --color=prompt:#ff5ef1,spinner:#bd5eff,pointer:#ff5ea0,header:#5eff6c --color=gutter:-1,border:#3c4048,scrollbar:#7b8496,label:#7b8496 --color=query:#ffffff --border="rounded" --border-label="" --preview-window="border-rounded" --height 40% --preview="bat -n --color=always {}"'
+
+# Load Custom Aliases from Configuration File
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+function Import-CustomAliases {
+    <#
+    .SYNOPSIS
+        Loads custom aliases from the configuration file.
+    .DESCRIPTION
+        Reads the aliases.json configuration file and creates aliases for the current PowerShell session.
+    #>
+    
+    $aliasesFilePath = Join-Path -Path $ENV:WindotsLocalRepo -ChildPath "aliases\aliases.json"
+    
+    if (Test-Path -Path $aliasesFilePath) {
+        try {
+            $aliasesConfig = Get-Content -Path $aliasesFilePath -Raw | ConvertFrom-Json
+            
+            foreach ($alias in $aliasesConfig.aliases.PSObject.Properties) {
+                Set-Alias -Name $alias.Name -Value $alias.Value -Scope Global
+                Write-Verbose "Loaded custom alias: $($alias.Name) -> $($alias.Value)"
+            }
+        } catch {
+            Write-Warning "Failed to load custom aliases: $_"
+        }
+    }
+}
+
+# Load custom aliases
+Import-CustomAliases
 
 
 # Prompt & Shell Configuration 🐚
