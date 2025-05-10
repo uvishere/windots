@@ -271,6 +271,33 @@ function Remove-ItemExtended {
     Remove-Item $Path -Recurse:$rf -Force:$rf
 }
 
+function Add-Alias {
+    <#
+    .SYNOPSIS
+        Creates a new PowerShell alias for a command.
+    .DESCRIPTION
+        Creates a new PowerShell alias for a command using Set-Alias.
+        This function provides a convenient way to add aliases during a PowerShell session.
+    .PARAMETER Name
+        The name of the alias to create.
+    .PARAMETER Command
+        The command that the alias will execute.
+    .EXAMPLE
+        Add-Alias -Name gst -Command "git status"
+        Creates an alias 'gst' for the command 'git status'.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, Position = 0)]
+        [string]$Name,
+        [Parameter(Mandatory = $true, Position = 1)]
+        [string]$Command
+    )
+
+    Write-Verbose "Creating alias '$Name' for command '$Command'"
+    Set-Alias -Name $Name -Value $Command -Scope Global
+}
+
 
 # Environment Variables 🌐
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
