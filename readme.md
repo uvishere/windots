@@ -1,4 +1,4 @@
- <p align="center"> 
+ <p align="center">
   <a href="https://scottmckendry.tech">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://scottmckendry.tech/img/logo/icon2transparent.png">
@@ -22,6 +22,10 @@
     <img alt="stars" src="https://img.shields.io/github/stars/scottmckendry/windots?style=for-the-badge&logo=github&color=%23f7768e">
   </a>
 </p>
+
+> [!IMPORTANT]
+> I no longer use Windows. If you think this project is cool, then chances are you shouldn't be using Windows either.
+> All of my up-to-date dotfiles are available over on my NixOS config repo here: [nix](https://github.com/scottmckendry/nix).
 
 My personal Windows-friendly dotfiles. Supports automatic installation of dependencies and configuration of Windows Terminal, Neovim, PowerShell Core and more!
 
