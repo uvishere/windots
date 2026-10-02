@@ -68,7 +68,6 @@ $wingetDeps = @(
     "opentofu.tofu"
     "postgresql.postgresql.18"
     "python.python.3.14"
-    "rustlang.rustup"
 
     # Apps
     "adobe.acrobat.reader.64-bit"
