@@ -74,6 +74,17 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
    - Create an SSH key, add it to GitHub, then `git remote set-url origin git@github.com:uvishere/windots.git`.
    - Put machine-only git settings (hooks, credential helper) in `~/.gitconfig.local` — it's included by `.gitconfig` but never committed.
    - Reinstall work-only tooling from its own source (git-ai, herdr, company Claude plugins, SSH hosts). None of it lives in this public repo.
+6. **Restore Claude Code sessions** (optional). Sessions and memory are local-only and contain work data, so they travel as a zip via company storage — never this repo. Do this **before** using Claude Code on the new laptop, because it overwrites `history.jsonl`:
+   1. On the old laptop, close Claude Code and zip the sessions:
+      ```powershell
+      tar -a -cf "$HOME\Downloads\claude-sessions.zip" -C "$HOME\.claude" projects history.jsonl
+      ```
+   2. Move the zip across via company OneDrive / Google Drive.
+   3. On the new laptop, after `Setup.ps1` and signing in to Claude Code, close all Claude Code windows and extract into `.claude`:
+      ```powershell
+      tar -xf "$HOME\Downloads\claude-sessions.zip" -C "$HOME\.claude"
+      ```
+   4. Run `claude --resume` from a folder you worked in before. Sessions are filed by folder path (e.g. `C:\Users\uvp\pageup\windots` → `projects\C--Users-uvp-pageup-windots`), so keep the same username and clone repos to the same locations or they won't show up.
 
 Re-run `Setup.ps1` (or `up`) any time to pick up new dependencies or repair links — Windows Terminal in particular can replace its symlink with a plain file when settings are saved from its UI.
 
