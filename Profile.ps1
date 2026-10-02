@@ -67,7 +67,7 @@ function Update-Profile {
         sudo pwsh ./Setup.ps1
     }
     else {
-        Start-Process wezterm -Verb runAs -WindowStyle Hidden -ArgumentList "start --cwd $PWD pwsh -NonInteractive -Command ./Setup.ps1"
+        Start-Process pwsh -Verb runAs -WindowStyle Hidden -ArgumentList "-NonInteractive -File `"$ENV:WindotsLocalRepo\Setup.ps1`""
     }
 
     Write-Verbose "Reverting to previous working directory"

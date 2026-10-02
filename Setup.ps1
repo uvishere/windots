@@ -21,8 +21,6 @@ $symlinks = @{
     "$HOME\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json" = ".\windowsterminal\settings.json"
     "$HOME\.gitconfig"                                                                              = ".\.gitconfig"
     "$HOME\AppData\Roaming\lazygit"                                                                 = ".\lazygit"
-    "$HOME\AppData\Roaming\AltSnap\AltSnap.ini"                                                     = ".\altsnap\AltSnap.ini"
-    "$ENV:PROGRAMFILES\WezTerm\wezterm_modules"                                                     = ".\wezterm\"
     "$HOME\.config\ccstatusline\settings.json"                                                      = ".\ccstatusline\settings.json"
     "$HOME\.claude\CLAUDE.md"                                                                       = ".\claude\CLAUDE.md"
     "$HOME\.claude\hooks\jira-branch-gate.sh"                                                       = ".\claude\hooks\jira-branch-gate.sh"
@@ -75,10 +73,8 @@ $wingetDeps = @(
     "anthropic.claude"
     "devtoys-app.devtoys"
     "figma.figma"
-    "google.antigravityide"
     "google.chrome"
     "google.googledrive"
-    "jan.jan"
     "logitech.optionsplus"
     "marktext.marktext"
     "microsoft.powertoys"
@@ -87,7 +83,6 @@ $wingetDeps = @(
     "zoom.zoom.exe"
 )
 $chocoDeps = @(
-    "altsnap"
     "bat"
     "fd"
     "fzf"
@@ -101,7 +96,6 @@ $chocoDeps = @(
     "nerd-fonts-jetbrainsmono"
     "ripgrep"
     "sqlite"
-    "wezterm"
     "zig"
     "zoxide"
 )
@@ -113,17 +107,14 @@ $npmDeps = @(
     "ccstatusline"
     "mcp-remote"
     "pnpm"
-    "task-master-ai"
 )
 
 # PS Modules
 $psModules = @(
-    "CompletionPredictor"
     "Pester"
     "PSScriptAnalyzer"
     "poshy-coreutils-ish"
     "powershell-yaml"
-    "ps-arch-wsl"
     "ps-color-scripts"
 )
 
@@ -177,9 +168,6 @@ if (Test-Path "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Pro
     Remove-Item "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Neovim\" -Recurse -Force
 }
 
-# Persist Environment Variables
-[System.Environment]::SetEnvironmentVariable('WEZTERM_CONFIG_FILE', "$PSScriptRoot\wezterm\wezterm.lua", [System.EnvironmentVariableTarget]::User)
-
 $currentGitEmail = (git config --global user.email)
 $currentGitName = (git config --global user.name)
 
@@ -205,5 +193,3 @@ git config --global user.name $currentGitName | Out-Null
 # Install bat themes
 bat cache --clear
 bat cache --build
-
-.\altsnap\createTask.ps1 | Out-Null

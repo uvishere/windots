@@ -67,7 +67,7 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
    cd $HOME\pageup\windots
    .\Setup.ps1
    ```
-   This installs the winget / choco / npm / PowerShell-module lists and Claude Code, links the profile, nvim, git, Windows Terminal, lazygit, fastfetch, AltSnap, ccstatusline and Claude config, and copies `claude/settings.json` if none exists. It opens the Leapp releases page if Leapp is missing.
+   This installs the winget / choco / npm / PowerShell-module lists and Claude Code, links the profile, nvim, git, Windows Terminal, lazygit, fastfetch, ccstatusline and Claude config, and copies `claude/settings.json` if none exists. It opens the Leapp releases page if Leapp is missing.
 5. **Restart the terminal**, then finish the manual bits:
    - Install **Leapp** from the page that opened (not on winget/choco).
    - `gh auth login` and `claude` (sign in).
