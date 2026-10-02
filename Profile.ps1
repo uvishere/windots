@@ -6,7 +6,7 @@
 #  ╚══╝╚══╝ ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
 # Profile.ps1 - UV Panta
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+Set-PSReadLineOption -PredictionSource History
 
 # Aliases 🔗
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -285,35 +285,23 @@ $ENV:FZF_DEFAULT_OPTS = '--color=fg:-1,fg+:#ffffff,bg:-1,bg+:#3c4048 --color=hl:
 # Prompt & Shell Configuration 🐚
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Start background jobs for dotfiles and software update checks
-Start-ThreadJob -ScriptBlock {
-    Set-Location -Path $ENV:WindotsLocalRepo
-    git fetch
-    $gitUpdates = git status
-    if ($gitUpdates -match "behind") {
-        $ENV:DOTFILES_UPDATE_AVAILABLE = "󱤛 "
-    }
-    else {
-        $ENV:DOTFILES_UPDATE_AVAILABLE = ""
-    }
-} | Out-Null
+# Update-status cache: read instantly; refresh in a detached background pwsh
+# if older than 60 minutes. The on-disk values are consumed by Starship.
+$statusDir = Join-Path $env:LOCALAPPDATA 'windots-status'
+$dotfilesCache = Join-Path $statusDir 'dotfiles'
+$softwareCache = Join-Path $statusDir 'software'
+$ENV:DOTFILES_UPDATE_AVAILABLE = if (Test-Path $dotfilesCache) { Get-Content $dotfilesCache -Raw } else { '' }
+$ENV:SOFTWARE_UPDATE_AVAILABLE = if (Test-Path $softwareCache) { Get-Content $softwareCache -Raw } else { '' }
 
-Start-ThreadJob -ScriptBlock {
-    <#
-        This is gross, I know. But there's a noticible lag that manifests in powershell when running the winget and choco commands
-        within the main pwsh process. Running this whole block as an isolated job fails to set the environment variable correctly.
-        The compromise is to run the main logic of this block within a threadjob and get the output of the winget and choco commands
-        via two isolated jobs. This sets the environment variable correctly and doesn't cause any lag (that I've noticed yet).
-    #>
-    $wingetUpdatesString = Start-Job -ScriptBlock { winget list --upgrade-available | Out-String } | Wait-Job | Receive-Job
-    $chocoUpdatesString = Start-Job -ScriptBlock { choco upgrade all --noop -y | Out-String } | Wait-Job | Receive-Job
-    if ($wingetUpdatesString -match "upgrades available" -or $chocoUpdatesString -notmatch "can upgrade 0/") {
-        $ENV:SOFTWARE_UPDATE_AVAILABLE = " "
-    }
-    else {
-        $ENV:SOFTWARE_UPDATE_AVAILABLE = ""
-    }
-} | Out-Null
+$cacheAge = if (Test-Path $dotfilesCache) { (Get-Date) - (Get-Item $dotfilesCache).LastWriteTime } else { [TimeSpan]::MaxValue }
+if ($cacheAge.TotalMinutes -gt 60) {
+    [System.Diagnostics.Process]::Start([System.Diagnostics.ProcessStartInfo]@{
+        FileName = 'pwsh'
+        Arguments = "-NoProfile -NonInteractive -File `"$ENV:WindotsLocalRepo\Update-Check.ps1`""
+        UseShellExecute = $false
+        CreateNoWindow = $true
+    }) | Out-Null
+}
 
 function Invoke-Starship-TransientFunction {
     &starship module character
@@ -334,14 +322,15 @@ $colors = @{
 }
 
 Set-PSReadLineOption -Colors $colors
-Set-PSReadLineOption -PredictionSource HistoryAndPlugin
 Set-PSReadLineOption -PredictionViewStyle InlineView
 Set-PSReadLineKeyHandler -Function AcceptSuggestion -Key Alt+l
-Import-Module -Name CompletionPredictor
 
 # Skip fastfetch for non-interactive shells
 if ([Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
     return
 }
 
-fastfetch
+if (-not $env:FASTFETCH_SHOWN) {
+    $env:FASTFETCH_SHOWN = '1'
+    fastfetch
+}

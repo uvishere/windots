@@ -91,10 +91,12 @@ return {
         })
 
         -- PowerShell
-        local bundle_path = mason_registry.get_package("powershell-editor-services"):get_install_path()
-        require("lspconfig").powershell_es.setup({
-            bundle_path = bundle_path,
-            settings = { powershell = { codeFormatting = { Preset = "Stroustrup" } } },
-        })
+        if mason_registry.is_installed("powershell-editor-services") then
+            local bundle_path = mason_registry.get_package("powershell-editor-services"):get_install_dir()
+            require("lspconfig").powershell_es.setup({
+                bundle_path = bundle_path,
+                settings = { powershell = { codeFormatting = { Preset = "Stroustrup" } } },
+            })
+        end
     end,
 }

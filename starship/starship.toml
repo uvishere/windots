@@ -3,6 +3,7 @@ format = """$all $fill $cmd_duration
 $character"""
 
 add_newline = false
+command_timeout = 1000
 
 [character]
 success_symbol = "[❯](green)"

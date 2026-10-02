@@ -23,6 +23,10 @@ $symlinks = @{
     "$HOME\AppData\Roaming\lazygit"                                                                 = ".\lazygit"
     "$HOME\AppData\Roaming\AltSnap\AltSnap.ini"                                                     = ".\altsnap\AltSnap.ini"
     "$ENV:PROGRAMFILES\WezTerm\wezterm_modules"                                                     = ".\wezterm\"
+    "$HOME\.config\ccstatusline\settings.json"                                                      = ".\ccstatusline\settings.json"
+    "$HOME\.claude\CLAUDE.md"                                                                       = ".\claude\CLAUDE.md"
+    "$HOME\.claude\hooks\jira-branch-gate.sh"                                                       = ".\claude\hooks\jira-branch-gate.sh"
+    "$HOME\.claude\skills\babysit-pr"                                                               = ".\claude\skills\babysit-pr"
 }
 
 # Winget & choco dependencies
@@ -40,6 +44,46 @@ $wingetDeps = @(
     "neovim.neovim"
     "openjs.nodejs"
     "starship.starship"
+
+    # Dev tools & runtimes
+    "7zip.7zip"
+    "amazon.awscli"
+    "astral-sh.uv"
+    "caddyserver.caddy"
+    "coder.coder"
+    "coder.coderdesktop"
+    "docker.dockerdesktop"
+    "golang.go"
+    "google.cloudsdk"
+    "hashicorp.terraform"
+    "insomnia.insomnia"
+    "jqlang.jq"
+    "microsoft.azurecli"
+    "microsoft.dotnet.sdk.9"
+    "microsoft.dotnet.sdk.10"
+    "microsoft.visualstudio.2022.buildtools"
+    "microsoft.visualstudiocode"
+    "microsoft.windowsterminal"
+    "microsoft.wsl"
+    "notepad++.notepad++"
+    "opentofu.tofu"
+    "postgresql.postgresql.18"
+    "rustlang.rustup"
+
+    # Apps
+    "adobe.acrobat.reader.64-bit"
+    "andrewng.openworker"
+    "anthropic.claude"
+    "figma.figma"
+    "google.antigravityide"
+    "google.chrome"
+    "google.googledrive"
+    "jan.jan"
+    "logitech.optionsplus"
+    "marktext.marktext"
+    "microsoft.powertoys"
+    "slacktechnologies.slack"
+    "zoom.zoom.exe"
 )
 $chocoDeps = @(
     "altsnap"
@@ -47,7 +91,11 @@ $chocoDeps = @(
     "fd"
     "fzf"
     "gawk"
+    "k9s"
+    "kubernetes-cli"
+    "kubernetes-helm"
     "lazygit"
+    "less"
     "mingw"
     "nerd-fonts-jetbrainsmono"
     "ripgrep"
@@ -57,10 +105,23 @@ $chocoDeps = @(
     "zoxide"
 )
 
+# Global npm packages
+$npmDeps = @(
+    "@fission-ai/openspec"
+    "@google/gemini-cli"
+    "ccstatusline"
+    "mcp-remote"
+    "pnpm"
+    "task-master-ai"
+)
+
 # PS Modules
 $psModules = @(
     "CompletionPredictor"
+    "Pester"
     "PSScriptAnalyzer"
+    "poshy-coreutils-ish"
+    "powershell-yaml"
     "ps-arch-wsl"
     "ps-color-scripts"
 )
@@ -94,6 +155,22 @@ foreach ($psModule in $psModules) {
     }
 }
 
+$installedNpmDeps = npm ls -g --depth=0 2>$null | Out-String
+foreach ($npmDep in $npmDeps) {
+    if ($installedNpmDeps -notmatch [regex]::Escape("$npmDep@")) {
+        npm install -g $npmDep
+    }
+}
+
+if (!(Get-Command claude -ErrorAction SilentlyContinue)) {
+    Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
+}
+
+# Leapp isn't published to winget or choco, so point to the installer instead of guessing a URL
+if (!(Test-Path "$env:LOCALAPPDATA\Programs\Leapp")) {
+    Start-Process "https://www.leapp.cloud/releases"
+}
+
 # Delete OOTB Nvim Shortcuts (including QT)
 if (Test-Path "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Neovim\") {
     Remove-Item "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Neovim\" -Recurse -Force
@@ -109,7 +186,14 @@ $currentGitName = (git config --global user.name)
 Write-Host "Creating Symbolic Links..."
 foreach ($symlink in $symlinks.GetEnumerator()) {
     Get-Item -Path $symlink.Key -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Path (Split-Path $symlink.Key) -Force | Out-Null
     New-Item -ItemType SymbolicLink -Path $symlink.Key -Target (Resolve-Path $symlink.Value) -Force | Out-Null
+}
+
+# Copied rather than linked: Claude Code rewrites settings.json at runtime, and a link would
+# leak work-only additions (org plugins, autoMode context) back into this public repo.
+if (!(Test-Path "$HOME\.claude\settings.json")) {
+    Copy-Item ".\claude\settings.json" "$HOME\.claude\settings.json"
 }
 
 git config --global --unset user.email | Out-Null

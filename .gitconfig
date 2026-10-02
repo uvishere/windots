@@ -1,9 +1,15 @@
 [core]
-editor = nvim
+	editor = code --new-window --wait
 [alias]
 co = checkout
 hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
 [fetch]
 prune = true
 [user]
-	email = uvishere@gmail.com
+	name = UV Panta
+	email = 5089222+uvishere@users.noreply.github.com
+[push]
+	autoSetupRemote = true
+# Machine-specific settings (hooks, credential helpers) live outside the public repo.
+[include]
+	path = ~/.gitconfig.local
