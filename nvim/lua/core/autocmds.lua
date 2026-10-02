@@ -13,23 +13,40 @@ autocmd("BufEnter", {
     desc = "Disable New Line Comment",
 })
 
+-- NOTE: This is a hacky fix for bicep param files. The current behaviour causes the bicep lsp to detect
+-- bicepparam files as bicep files when switching buffers. This isn't an issue when initialising the lsp
+-- with a bicepparam file initially.
+-- TODO: Find a better solution, report upstream or wait for a fix.
 autocmd("BufEnter", {
-    callback = function(opts)
-        if vim.bo[opts.buf].filetype == "bicep" then
-            vim.bo.commentstring = "// %s"
-        end
+    pattern = { "*.bicepparam" },
+    callback = function()
+        local bicep_client = vim.lsp.get_clients({ name = "bicep" })
+        vim.lsp.buf_detach_client(vim.api.nvim_get_current_buf(), bicep_client[1].id)
+        vim.lsp.buf_attach_client(vim.api.nvim_get_current_buf(), bicep_client[1].id)
     end,
     group = general,
-    desc = "Set Bicep Comment String",
+    desc = "Detach and reattach bicep client for bicepparam files",
 })
 
 autocmd("BufEnter", {
-    pattern = { "*.md", "*.txt" },
+    pattern = { "*.md", "*.mdx", "*.txt" },
     callback = function()
         vim.opt_local.spell = true
     end,
     group = general,
     desc = "Enable spell checking on specific filetypes",
+})
+
+autocmd("BufEnter", {
+    pattern = { "*.md" },
+    callback = function()
+        local toggle = utils.copilot_toggle()
+        if toggle:get() then
+            toggle:toggle()
+        end
+    end,
+    group = general,
+    desc = "Disable copilot in markdown files",
 })
 
 autocmd("BufWinEnter", {
@@ -56,4 +73,71 @@ autocmd("FileType", {
             desc = "Quit buffer",
         })
     end,
+})
+
+autocmd("BufEnter", {
+    group = general,
+    callback = function(event)
+        local two_space_indent_types = {
+            "nix",
+        }
+        if vim.tbl_contains(two_space_indent_types, vim.bo[event.buf].filetype) then
+            vim.bo[event.buf].shiftwidth = 2
+            vim.bo[event.buf].tabstop = 2
+            vim.bo[event.buf].softtabstop = 2
+        end
+    end,
+})
+
+autocmd("FileType", {
+    group = general,
+    callback = function(event)
+        local ok = pcall(vim.treesitter.start, event.buf)
+        if not ok then
+            return
+        end
+    end,
+    desc = "Start treesitter automatically",
+})
+
+autocmd("VimEnter", {
+    group = general,
+    callback = function()
+        if vim.fn.argc(-1) == 0 then
+            require("resession").load(vim.fn.getcwd(), { silence_errors = true })
+            -- Show dashboard if no buffers are loaded after session load
+            local bufs = vim.tbl_filter(function(buf)
+                return vim.bo[buf].buflisted
+            end, vim.api.nvim_list_bufs())
+            if #bufs == 0 or (#bufs == 1 and vim.api.nvim_buf_get_name(bufs[1]) == "") then
+                require("snacks").dashboard()
+            end
+        end
+    end,
+    nested = true,
+    desc = "Load previous session from cwd, if no args were given",
+})
+
+autocmd("VimLeavePre", {
+    group = general,
+    callback = function()
+        require("resession").save(vim.fn.getcwd(), { notify = true })
+    end,
+    desc = "Save session to cwd on exit",
+})
+
+autocmd("BufEnter", {
+    group = general,
+    callback = vim.schedule_wrap(function(data)
+        if data.buf ~= vim.api.nvim_get_current_buf() then
+            return
+        end
+        local root = utils.find_root(data.buf, { ".git" })
+        if root == nil then
+            return
+        end
+        vim.cmd.lcd(root)
+    end),
+    nested = true,
+    desc = "Find root and change current directory",
 })

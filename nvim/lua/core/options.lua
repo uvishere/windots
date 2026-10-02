@@ -1,5 +1,8 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
+vim.g.autoformat = true
+vim.g.user = os.getenv("USERNAME") or os.getenv("USER")
+vim.g.host = vim.fn.hostname()
 
 local opt = vim.opt
 opt.shell = "zsh"
@@ -19,7 +22,7 @@ end
 opt.number = true
 opt.relativenumber = true
 opt.ignorecase = true
-opt.cursorline = false
+opt.cursorline = true
 opt.clipboard = "unnamedplus"
 opt.termguicolors = true
 opt.confirm = true
@@ -32,12 +35,21 @@ opt.wrap = true
 opt.linebreak = true
 opt.spelllang = "en_nz"
 opt.showtabline = 0
+opt.title = true
+opt.titlestring = string.format("%s@%s - nvim %%t", vim.g.user, vim.g.host)
+
+-- Set statusline
+opt.laststatus = 3
+opt.statusline = require("core.statusline").statusline
 
 -- Set tab width
 opt.tabstop = 4
 opt.shiftwidth = 4
-opt.autoindent = true
 opt.expandtab = true
+opt.autoindent = true
+opt.breakindent = true
+opt.breakindentopt = "shift:2"
+opt.showbreak = "↳"
 
 -- Make cursor blink
 opt.guicursor = {

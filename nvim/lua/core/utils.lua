@@ -18,33 +18,6 @@ function M.get_hlgroup(name, fallback)
     return fallback or {}
 end
 
---- Remove a buffer by its number without affecting window layout
---- @param buf? number The buffer number to delete
-function M.delete_buffer(buf)
-    if buf == nil or buf == 0 then
-        buf = vim.api.nvim_get_current_buf()
-    end
-    local win_id = vim.fn.bufwinid(buf)
-    local alt_buf = vim.fn.bufnr("#")
-    if alt_buf ~= buf and vim.fn.buflisted(buf) == 1 and alt_buf ~= -1 then
-        vim.api.nvim_win_set_buf(win_id, alt_buf)
-        vim.api.nvim_command("bwipeout " .. buf)
-        return
-    end
-
-    ---@diagnostic disable-next-line: param-type-mismatch
-    local has_prev_buf = pcall(vim.cmd, "bprevious")
-    if has_prev_buf and buf ~= vim.api.nvim_win_get_buf(win_id) then
-        vim.api.nvim_command("bwipeout " .. buf)
-        return
-    end
-
-    -- if alternate and previous buffers are both unavailable, create a new buffer instead
-    local new_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_win_set_buf(win_id, new_buf)
-    vim.api.nvim_command("bwipeout " .. buf)
-end
-
 --- Switch to the previous buffer
 function M.switch_to_other_buffer()
     -- try alternate buffer first
@@ -69,7 +42,7 @@ end
 function M.get_buffer_count()
     local count = 0
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.fn.bufname(buf) ~= "" then
+        if vim.bo[buf].buflisted and vim.bo[buf].buftype ~= "nofile" then
             count = count + 1
         end
     end
@@ -82,37 +55,19 @@ function M.parse_hex(int_color)
     return string.format("#%x", int_color)
 end
 
---- Create a centered floating window of a given width and height, relative to the size of the screen.
---- @param width number width of the window where 1 is 100% of the screen
---- @param height number height of the window - between 0 and 1
---- @param buf number The buffer number
---- @return number The window number
-function M.open_centered_float(width, height, buf)
-    buf = buf or vim.api.nvim_create_buf(false, true)
-    local win_width = math.floor(vim.o.columns * width)
-    local win_height = math.floor(vim.o.lines * height)
-    local offset_y = math.floor((vim.o.lines - win_height) / 2)
-    local offset_x = math.floor((vim.o.columns - win_width) / 2)
-
-    local win = vim.api.nvim_open_win(buf, true, {
-        relative = "editor",
-        width = win_width,
-        height = win_height,
-        row = offset_y,
-        col = offset_x,
-        style = "minimal",
-        border = "single",
-    })
-
-    return win
-end
-
 --- Open the help window in a floating window
 --- @param buf number The buffer number
 function M.open_help(buf)
     if buf ~= nil and vim.bo[buf].filetype == "help" and not vim.bo[buf].modifiable then
         local help_win = vim.api.nvim_get_current_win()
-        local new_win = M.open_centered_float(0.6, 0.7, buf)
+        local new_win = vim.api.nvim_open_win(buf, true, {
+            relative = "editor",
+            row = 0,
+            col = vim.o.columns - 80,
+            width = 80,
+            height = vim.o.lines - 3,
+            border = "rounded",
+        })
 
         -- set scroll position
         vim.wo[help_win].scroll = vim.wo[new_win].scroll
@@ -120,32 +75,6 @@ function M.open_help(buf)
         -- close the help window
         vim.api.nvim_win_close(help_win, true)
     end
-end
-
---- Run a shell command and return the output
---- @param cmd table The command to run in the format { "command", "arg1", "arg2", ... }
---- @param cwd? string The current working directory
---- @return table stdout, number? return_code, table? stderr
-function M.get_cmd_output(cmd, cwd)
-    if type(cmd) ~= "table" then
-        vim.notify("Command must be a table", 3, { title = "Error" })
-        return {}
-    end
-
-    local command = table.remove(cmd, 1)
-    local stderr = {}
-    local stdout, ret = require("plenary.job")
-        :new({
-            command = command,
-            args = cmd,
-            cwd = cwd,
-            on_stderr = function(_, data)
-                table.insert(stderr, data)
-            end,
-        })
-        :sync()
-
-    return stdout, ret, stderr
 end
 
 --- Write a table of lines to a file
@@ -167,77 +96,116 @@ function M.write_to_file(file, lines)
     end
 end
 
---- Display a diff between the current buffer and a given file
---- @param file string The file to diff against the current buffer
-function M.diff_file(file)
-    local pos = vim.fn.getpos(".")
-    local current_file = vim.fn.expand("%:p")
-    vim.cmd("edit " .. file)
-    vim.cmd("vert diffsplit " .. current_file)
-    vim.fn.setpos(".", pos)
+function M.toggle_global_boolean(option, description)
+    return require("snacks").toggle({
+        name = description,
+        get = function()
+            return vim.g[option] == nil or vim.g[option]
+        end,
+        set = function(state)
+            vim.g[option] = state
+        end,
+    })
 end
 
---- Display a diff between a file at a given commit and the current buffer
---- @param commit string The commit hash
---- @param file_path string The file path
-function M.diff_file_from_history(commit, file_path)
-    local extension = vim.fn.fnamemodify(file_path, ":e") == "" and "" or "." .. vim.fn.fnamemodify(file_path, ":e")
-    local temp_file_path = os.tmpname() .. extension
-
-    local cmd = { "git", "show", commit .. ":" .. file_path }
-    local out = M.get_cmd_output(cmd)
-
-    M.write_to_file(temp_file_path, out)
-    M.diff_file(temp_file_path)
+--- Returns a snacks toggle for copilot completion
+--- @return snacks.toggle.Class
+function M.copilot_toggle()
+    return require("snacks").toggle({
+        name = "Copilot Completion",
+        get = function()
+            return not require("copilot.client").is_disabled()
+        end,
+        set = function(state)
+            if state then
+                require("copilot.command").enable()
+            else
+                require("copilot.command").disable()
+            end
+        end,
+    })
 end
 
---- Open a telescope picker to select a file to diff against the current buffer
---- @param recent? boolean If true, open the recent files picker
-function M.telescope_diff_file(recent)
-    local picker = require("telescope.builtin").find_files
-    if recent then
-        picker = require("telescope.builtin").oldfiles
+--- Open K9s in a fullscreen interactive terminal
+---@param cmd string[] The command to run in the terminal
+--- @param fullscreen? boolean Open ther terminal in a fullscreen float
+function M.open_terminal_toggle(cmd, fullscreen)
+    local snacks = require("snacks")
+    local opts = fullscreen and { win = { position = "float", width = 0.99, height = 0.99 } } or nil
+    snacks.terminal.toggle(cmd, opts)
+    if vim.bo.filetype == "snacks_terminal" then
+        vim.notify("_Double press `ESC`_ to return to normal mode", 2, { title = cmd[1] })
+    end
+end
+
+--- Restart all LSP clients attached to the current buffer
+function M.restart_lsp()
+    local clients = vim.lsp.get_clients({ bufnr = 0 })
+    if #clients == 0 then
+        vim.notify("No LSP client attached to current buffer", vim.log.levels.WARN)
+        return
+    end
+    for _, client in ipairs(clients) do
+        local config = client.config
+        local name = client.name
+        client.stop(true)
+        vim.defer_fn(function()
+            vim.lsp.start(config)
+            vim.notify("LSP restarted: " .. name, vim.log.levels.INFO)
+        end, 50)
+    end
+end
+
+--- Open the LSP log file in a readonly split
+function M.open_lsp_log()
+    local log_path = vim.lsp.log.get_filename()
+    if vim.fn.filereadable(log_path) == 0 then
+        vim.notify("LSP log file not found: " .. log_path, vim.log.levels.WARN)
+        return
+    end
+    vim.cmd("e " .. log_path)
+    vim.notify("Opened LSP log: " .. log_path, vim.log.levels.INFO)
+end
+
+--- Open GitHub markdown preview for the current buffer
+function M.gh_markdown_preview()
+    local bufname = vim.api.nvim_buf_get_name(0)
+    if bufname == "" then
+        vim.notify("No file to preview", vim.log.levels.WARN)
+        return
+    end
+    vim.fn.jobstart({ "gh", "markdown-preview", bufname }, {
+        on_stderr = function(_, data)
+            if not data then
+                return
+            end
+            --- remove the last line if it's empty
+            if data[#data] == "" then
+                table.remove(data, #data)
+            end
+            vim.notify(table.concat(data, "\n"), vim.log.levels.INFO, { title = "Markdown Preview" })
+        end,
+    })
+end
+
+--- Find project root directory by searching for marker files/directories
+--- @param buf integer Buffer number
+--- @param names table|function Array of file names to search for, or a callable
+--- @return string|nil root the root directory path, or nil if not found
+function M.find_root(buf, names)
+    local path = vim.api.nvim_buf_get_name(buf)
+    if path == "" then
+        return nil
     end
 
-    picker({
-        prompt_title = "Select File to Compare",
-        attach_mappings = function(prompt_bufnr)
-            local actions = require("telescope.actions")
-            local action_state = require("telescope.actions.state")
+    local dir = vim.fn.fnamemodify(path, ":p:h")
+    if dir == "" then
+        return nil
+    end
 
-            actions.select_default:replace(function()
-                actions.close(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                M.diff_file(selection.value)
-            end)
-            return true
-        end,
-    })
-end
-
---- Open a telescope picker to select a commit to diff against the current buffer
-function M.telescope_diff_from_history()
-    local current_file = vim.fn.fnamemodify(vim.fn.expand("%:p"), ":~:."):gsub("\\", "/")
-    require("telescope.builtin").git_commits({
-        git_command = { "git", "log", "--pretty=oneline", "--abbrev-commit", "--follow", "--", current_file },
-        attach_mappings = function(prompt_bufnr)
-            local actions = require("telescope.actions")
-            local action_state = require("telescope.actions.state")
-
-            actions.select_default:replace(function()
-                actions.close(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                M.diff_file_from_history(selection.value, current_file)
-            end)
-            return true
-        end,
-    })
-end
-
---- Run current file inside toggleterm
-function M.run_shell_script()
-    local script = vim.fn.expand("%:p")
-    require("toggleterm").exec(script)
+    -- Search upwards for marker files/directories
+    local root = vim.fs.root(dir, names)
+    return root or nil
 end
 
 return M

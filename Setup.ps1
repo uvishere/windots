@@ -68,12 +68,14 @@ $wingetDeps = @(
     "notepad++.notepad++"
     "opentofu.tofu"
     "postgresql.postgresql.18"
+    "python.python.3.14"
     "rustlang.rustup"
 
     # Apps
     "adobe.acrobat.reader.64-bit"
     "andrewng.openworker"
     "anthropic.claude"
+    "devtoys-app.devtoys"
     "figma.figma"
     "google.antigravityide"
     "google.chrome"

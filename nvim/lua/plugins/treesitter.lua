@@ -1,15 +1,22 @@
 return {
     "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate",
+    build = function()
+        local TS = require("nvim-treesitter")
+        TS.update(nil, { summary = true })
+    end,
     event = { "BufReadPost", "BufNewFile" },
-    cmd = { "TSUpdateSync" },
+    cmd = { "TSUpdate", "TSInstall", "TSLog", "TSUninstall" },
     opts = {
         highlight = { enable = true },
         indent = { enable = true },
-        ensure_installed = {
+    },
+    config = function(_, opts)
+        local TS = require("nvim-treesitter")
+        local ensure_installed = {
             "bash",
             "bicep",
             "c_sharp",
+            "css",
             "gitignore",
             "go",
             "gomod",
@@ -18,21 +25,43 @@ return {
             "html",
             "http",
             "json",
+            "just",
+            "kdl",
             "lua",
             "luadoc",
             "luap",
             "markdown",
             "markdown_inline",
             "nix",
+            "odin",
             "powershell",
+            "python",
+            "razor",
             "regex",
+            "ron",
+            "rust",
+            "sql",
             "templ",
+            "terraform",
             "toml",
+            "typescript",
+            "typst",
+            "vim",
             "vimdoc",
             "yaml",
-        },
-    },
-    config = function(_, opts)
-        require("nvim-treesitter.configs").setup(opts)
+        }
+
+        TS.setup(opts)
+        vim.treesitter.language.register("markdown", "mdx")
+        local installed = TS.get_installed()
+        local to_install = vim.tbl_filter(function(lang)
+            return not vim.tbl_contains(installed, lang)
+        end, ensure_installed or {})
+
+        if #to_install > 0 then
+            vim.schedule(function()
+                TS.install(to_install, { summary = true })
+            end)
+        end
     end,
 }
