@@ -61,7 +61,6 @@ $wingetDeps = @(
     "microsoft.azurecli"
     "microsoft.dotnet.sdk.9"
     "microsoft.dotnet.sdk.10"
-    "microsoft.visualstudio.2022.buildtools"
     "microsoft.visualstudiocode"
     "microsoft.windowsterminal"
     "microsoft.wsl"
