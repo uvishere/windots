@@ -42,9 +42,36 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
 > [!WARNING]\
 > Under _**active development**_, expect changes. Existing configuration files will be overwritten. Please make a backup of any files you wish to keep before proceeding.
 
-1. Clone the repository to your preferred location.
-2. Run the `Install.ps1` script first
-3. Run `Setup.ps1` from an elevated PowerShell prompt. 
+### New laptop setup
+
+1. **Install Git** (Windows PowerShell is fine at this point):
+   ```powershell
+   winget install --id Git.Git -e
+   Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+   ```
+2. **Clone the repo** over HTTPS (no SSH key yet). Keep this path — `CLAUDE.md` refers to it:
+   ```powershell
+   git clone https://github.com/uvishere/windots.git $HOME\pageup\windots
+   cd $HOME\pageup\windots
+   ```
+3. **Install winget and PowerShell 7:**
+   ```powershell
+   .\Install.ps1
+   ```
+4. **Install everything and link the configs.** Open **PowerShell 7 as Administrator** (symlinks need admin unless Developer Mode is on):
+   ```powershell
+   cd $HOME\pageup\windots
+   .\Setup.ps1
+   ```
+   This installs the winget / choco / npm / PowerShell-module lists and Claude Code, links the profile, nvim, git, Windows Terminal, lazygit, fastfetch, AltSnap, ccstatusline and Claude config, and copies `claude/settings.json` if none exists. It opens the Leapp releases page if Leapp is missing.
+5. **Restart the terminal**, then finish the manual bits:
+   - Install **Leapp** from the page that opened (not on winget/choco).
+   - `gh auth login` and `claude` (sign in).
+   - Create an SSH key, add it to GitHub, then `git remote set-url origin git@github.com:uvishere/windots.git`.
+   - Put machine-only git settings (hooks, credential helper) in `~/.gitconfig.local` — it's included by `.gitconfig` but never committed.
+   - Reinstall work-only tooling from its own source (git-ai, herdr, company Claude plugins, SSH hosts). None of it lives in this public repo.
+
+Re-run `Setup.ps1` (or `up`) any time to pick up new dependencies or repair links — Windows Terminal in particular can replace its symlink with a plain file when settings are saved from its UI.
 
 ## 🤝 Contributing
 Pull requests and issues are welcome. If you have any questions or suggestions, please open an issue or reach out to me on [Twitter](https://twitter.com/scott_mckendry).
