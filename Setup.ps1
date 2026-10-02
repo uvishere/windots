@@ -84,6 +84,7 @@ $wingetDeps = @(
     "logitech.optionsplus"
     "marktext.marktext"
     "microsoft.powertoys"
+    "9PFXXSHC64H3" # Raycast (Microsoft Store)
     "slacktechnologies.slack"
     "zoom.zoom.exe"
 )
