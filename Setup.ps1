@@ -190,6 +190,14 @@ foreach ($symlink in $symlinks.GetEnumerator()) {
 if (!(Test-Path "$HOME\.claude\settings.json")) {
     Copy-Item ".\claude\settings.json" "$HOME\.claude\settings.json"
 }
+else {
+    # Tools like herdr create settings.json before Setup.ps1 runs, which would skip the copy and lose ccstatusline
+    $claudeSettings = Get-Content "$HOME\.claude\settings.json" -Raw | ConvertFrom-Json -AsHashtable
+    if (!$claudeSettings.ContainsKey("statusLine")) {
+        $claudeSettings["statusLine"] = (Get-Content ".\claude\settings.json" -Raw | ConvertFrom-Json -AsHashtable)["statusLine"]
+        $claudeSettings | ConvertTo-Json -Depth 100 | Set-Content "$HOME\.claude\settings.json"
+    }
+}
 
 git config --global --unset user.email | Out-Null
 git config --global --unset user.name | Out-Null
