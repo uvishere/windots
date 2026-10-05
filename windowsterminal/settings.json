@@ -6,7 +6,7 @@
     "centerOnLaunch": true,
     "copyFormatting": "none",
     "copyOnSelect": false,
-    "defaultProfile": "{5085e712-c1d9-468e-a2ae-e296e39dd0e5}",
+    "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
     "disableAnimations": false,
     "keybindings": 
     [
@@ -125,6 +125,7 @@
     "searchWebDefaultQueryUrl": "https://www.google.com/search?q=%22%s%22",
     "showTabsFullscreen": true,
     "showTabsInTitlebar": false,
+    "startupActions": "new-tab --profile {5085e712-c1d9-468e-a2ae-e296e39dd0e5}",
     "themes": [],
     "windowingBehavior": "useExisting"
 }
