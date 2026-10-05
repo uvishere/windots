@@ -67,13 +67,13 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
    cd $HOME\pageup\windots
    .\Setup.ps1
    ```
-   This installs the winget / choco / npm / PowerShell-module lists and Claude Code, links the profile, nvim, git, Windows Terminal, lazygit, fastfetch, ccstatusline and Claude config, and copies `claude/settings.json` if none exists. It opens the Leapp releases page if Leapp is missing.
+   This installs the winget / choco / npm / PowerShell-module lists, Claude Code and herdr (with its Claude integration), links the profile, nvim, git, Windows Terminal, lazygit, fastfetch, ccstatusline and Claude config, and copies `claude/settings.json` if none exists. It opens the Leapp releases page if Leapp is missing.
 5. **Restart the terminal**, then finish the manual bits:
    - Install **Leapp** from the page that opened (not on winget/choco).
    - `gh auth login` and `claude` (sign in).
    - Create an SSH key, add it to GitHub, then `git remote set-url origin git@github.com:uvishere/windots.git`.
    - Put machine-only git settings (hooks, credential helper) in `~/.gitconfig.local` — it's included by `.gitconfig` but never committed.
-   - Reinstall work-only tooling from its own source (git-ai, herdr, company Claude plugins, SSH hosts). None of it lives in this public repo.
+   - Reinstall work-only tooling from its own source (git-ai, company Claude plugins, SSH hosts). None of it lives in this public repo.
 6. **Restore Claude Code sessions** (optional). Sessions and memory are local-only and contain work data, so they travel as a zip via company storage — never this repo. Do this **before** using Claude Code on the new laptop, because it overwrites `history.jsonl`:
    1. On the old laptop, close Claude Code and zip the sessions:
       ```powershell

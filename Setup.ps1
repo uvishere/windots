@@ -158,6 +158,12 @@ if (!(Get-Command claude -ErrorAction SilentlyContinue)) {
     Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
 }
 
+# Windows Terminal's default profile launches herdr from its installer's stable alias path
+if (!(Test-Path "$env:LOCALAPPDATA\Programs\Herdr\bin\herdr.exe")) {
+    Invoke-RestMethod https://herdr.dev/install.ps1 | Invoke-Expression
+    & "$env:LOCALAPPDATA\Programs\Herdr\bin\herdr.exe" integration install claude
+}
+
 # Leapp isn't published to winget or choco, so point to the installer instead of guessing a URL
 if (!(Test-Path "$env:LOCALAPPDATA\Programs\Leapp")) {
     Start-Process "https://www.leapp.cloud/releases"
