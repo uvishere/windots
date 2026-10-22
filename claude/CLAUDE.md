@@ -19,7 +19,7 @@ Global behavioral rules. These override default behavior — follow them exactly
 - Use language-native doc standards (JSDoc/TSDoc for TypeScript, XML docs for C#, docstrings for Python). Every public function documents parameters, return type, and exceptions it can raise.
 - Never comment on what code does — comment only on why: the specific choice made, the trade-off being managed, the deep logic of the system.
 - Make code self-explanatory through domain-specific naming (`Bookings`, `Auditorium`, `Seat`) — never generic terms like `Item` or `Data`.
-- Limit comments to complex business logic, async flows, and intricate algorithms. No comments on standard CRUD operations or trivial assignments.
+- Inline comments are a last resort: add one only when the code cannot be made self-explanatory through naming, extraction, or structure — typically non-obvious business rules, async ordering, or intricate algorithms. Never on CRUD or trivial assignments. When a comment goes stale, delete the wrong part rather than writing a replacement explanation.
 
 ## Verify before "done"
 
