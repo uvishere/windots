@@ -16,6 +16,8 @@ $behind = (git status) -match 'behind'
 Pop-Location
 $dotfilesIcon = if ($behind) { "󱤛 " } else { '' }
 Set-Content -Path (Join-Path $statusDir 'dotfiles') -Value $dotfilesIcon -NoNewline -Encoding utf8
+# Rewriting an already-empty file leaves its timestamp unchanged, and Profile.ps1 uses that timestamp as the cache age.
+(Get-Item (Join-Path $statusDir 'dotfiles')).LastWriteTime = Get-Date
 
 # Software update check (winget + choco)
 $wingetOut = winget list --upgrade-available 2>&1 | Out-String
