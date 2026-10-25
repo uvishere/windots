@@ -154,7 +154,17 @@ function Start-Ticket($Ticket, [string]$Project, [string]$Label) {
     if ($LASTEXITCODE -and "$startReply" -notmatch 'agent_name_taken') {
         throw "the workspace is ready but Claude did not start in pane ${rootPane}: $startReply"
     }
-    Invoke-Herdr agent prompt $agentName $prompt | Out-Null
+    # herdr submits with an encoded Enter that Claude on Windows can ignore, leaving the prompt
+    # typed but unsent (agent_prompt_stalled); a plain carriage return submits it.
+    & $herdr agent prompt $agentName $prompt --wait --until working --until blocked --timeout 10000 *> $null
+    if ($LASTEXITCODE) {
+        & $herdr pane send-text $rootPane "`r" *> $null
+        foreach ($attempt in 1..10) {
+            Start-Sleep -Milliseconds 500
+            if ((Invoke-Herdr pane get $rootPane).pane.agent_status -in 'working', 'blocked') { return }
+        }
+        throw "Claude started but did not take the prompt; press Enter in pane $rootPane"
+    }
 }
 
 function Start-TicketInteractively {
