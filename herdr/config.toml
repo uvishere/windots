@@ -1,0 +1,102 @@
+# herdr config, adapted from https://github.com/Tolsee/dotfiles/tree/main/herdr for Windows,
+# PowerShell and JIRA. See herdr/README.md for the keymap.
+onboarding = false
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[terminal]
+new_cwd = "follow"
+
+# Task worktrees created by herdr-task.ps1 live outside the repos.
+[worktrees]
+directory = "~/.herdr/worktrees"
+
+[keys]
+prefix = "ctrl+b"
+settings = "prefix+s"
+detach = "prefix+q"
+reload_config = "prefix+r"
+# prefix+o is the herdr-task links popup below; move herdr's notification-target opener off it.
+open_notification_target = "prefix+shift+o"
+workspace_picker = "prefix+w"
+goto = "prefix+g"
+close_workspace = "prefix+shift+q"
+new_tab = "prefix+c"
+switch_tab = "prefix+1..9"
+focus_pane_left = "prefix+h"
+focus_pane_down = "prefix+j"
+focus_pane_up = "prefix+k"
+focus_pane_right = "prefix+l"
+split_vertical = ["prefix+v", "prefix+%"]
+split_horizontal = ["prefix+minus", 'prefix+"']
+close_pane = "prefix+x"
+zoom = "prefix+z"
+# prefix+r is reload_config above.
+resize_mode = "prefix+shift+r"
+new_worktree = "prefix+shift+g"
+# prefix+shift+x is herdr's default close_tab; keep that and put this beside it.
+remove_worktree = "prefix+alt+x"
+# Blocked agents are one key away instead of a sidebar scan.
+next_agent = "prefix+a"
+previous_agent = "prefix+shift+a"
+focus_agent = "prefix+alt+1..9"
+last_pane = "prefix+;"
+previous_workspace = "prefix+("
+next_workspace = "prefix+)"
+help = "prefix+?"
+copy_mode = "prefix+["
+edit_scrollback = "prefix+e"
+rename_tab = "prefix+shift+t"
+close_tab = "prefix+shift+x"
+
+# On Windows herdr runs commands through cmd.exe, hence %USERPROFILE%. -NoProfile keeps
+# popups instant; the scripts set up everything they need themselves.
+[[keys.command]]
+key = "prefix+t"
+type = "popup"
+command = 'pwsh -NoLogo -NoProfile -File "%USERPROFILE%\pageup\windots\herdr\herdr-task.ps1"'
+description = "start a JIRA ticket in its own worktree workspace with Claude"
+width = "80%"
+height = "80%"
+
+[[keys.command]]
+key = "prefix+o"
+type = "popup"
+command = 'pwsh -NoLogo -NoProfile -File "%USERPROFILE%\pageup\windots\herdr\herdr-task.ps1" open'
+description = "links for the focused task: ticket, PR, changed files, checks, branch"
+width = "80%"
+height = "70%"
+
+[ui]
+status_indicators = "symbols"
+mouse_capture = true
+copy_on_select = true
+confirm_close = true
+pane_borders = true
+hide_tab_bar_when_single_tab = false
+tab_bar_position = "top"
+show_agent_labels_on_pane_borders = true
+# Commands run on the server and only their last line shows, as plain text.
+tab_bar_right = [
+  { type = "zoom" },
+  { type = "command", command = 'pwsh -NoLogo -NoProfile -File "%USERPROFILE%\pageup\windots\herdr\herdr-status.ps1"', interval_seconds = 20, timeout_seconds = 10 },
+  { type = "datetime", format = "%H:%M" },
+]
+tab_bar_right_separator = " · "
+
+# herdr's default space rows, plus the JIRA ticket and repo reported by herdr-task.ps1.
+[ui.sidebar.spaces]
+rows = [
+  ["state_icon", "workspace"],
+  ["branch", "git_status"],
+  [{ token = "$jira", fg = "#5ea1ff" }, { token = "$repo", dim = true }],
+]
+
+[ui.toast]
+delivery = "system"
+delay_seconds = 2
+
+[session]
+resume_agents_on_restore = true

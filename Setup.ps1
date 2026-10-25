@@ -22,6 +22,7 @@ $symlinks = @{
     "$HOME\.gitconfig"                                                                              = ".\.gitconfig"
     "$HOME\AppData\Roaming\lazygit"                                                                 = ".\lazygit"
     "$HOME\.config\ccstatusline\settings.json"                                                      = ".\ccstatusline\settings.json"
+    "$HOME\AppData\Roaming\herdr\config.toml"                                                       = ".\herdr\config.toml"
     "$HOME\.claude\CLAUDE.md"                                                                       = ".\claude\CLAUDE.md"
     "$HOME\.claude\hooks\jira-branch-gate.sh"                                                       = ".\claude\hooks\jira-branch-gate.sh"
     "$HOME\.claude\skills\babysit-pr"                                                               = ".\claude\skills\babysit-pr"
